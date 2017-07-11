@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+
+<world name="demo_world" gravity="0.0 0.0 -9.8">
+
+	<robot name="testRRR">
+		<!-- model node is required -->
+		<model dir="../resources/test_robot" path="testRRR.urdf" name="testRRR" />
+		<!-- origin node is optional -->
+		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+	</robot>
+
+	<static_object name="Obstacle1">
+		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+		<collision>
+	        <origin xyz="0 0.4 2.0" rpy="0 0 0" />
+	        <geometry>
+	            <cylinder radius="0.1" length="0.4"/>
+	        </geometry>
+	    </collision>
+	    <visual>
+	        <origin xyz="0.0 0.4 2.0" rpy="0 0 0" />
+	        <geometry>
+	            <cylinder radius="0.1" length="0.4" />
+	        </geometry>
+	        <material name="material_red">
+		        <color rgba="255 0.0 0.0 1.0" />
+	        </material>
+	    </visual>
+	</static_object>
+
+	<static_object name="Obstacle2">
+		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+		<collision>
+	        <origin xyz="0 -0.5 0" rpy="0 0 0" />
+	        <geometry>
+	            <cylinder radius="0.1" length="0.56"/>
+	        </geometry>
+	    </collision>
+	    <visual>
+	        <origin xyz="0.0 -0.5 0" rpy="0 0 0" />
+	        <geometry>
+	            <cylinder radius="0.1" length="0.56" />
+	        </geometry>
+	        <material name="material_green">
+		        <color rgba="0.0 255.0 0.0 1.0" />
+	        </material>
+	    </visual>
+	</static_object>
+
+	<!-- <light name="light1" type="directional">
+		<position xyz="2.0 -1.5 2.5" />
+		<lookat xyz="0.0 -0.3 1.0" />
+	</light> -->
+
+	<light name="light2" type="directional">
+		<position xyz="1.5 1.5 2.5" />
+		<lookat xyz="0.0 0.3 1.5" />
+	</light>
+
+	<light name="light3" type="directional">
+		<position xyz="0.0 0.0 2.0" />
+		<lookat xyz="0.0 0.0 0.0" />
+	</light>
+
+	<camera name="camera_front">
+		<position xyz="1.5 0.3 0.6" />
+		<vertical xyz="0.0 0.0 1.0" />
+		<lookat xyz="0.0 0.0 0.2" />
+	</camera>
+	<camera name="camera_top">
+		<position xyz="2.0 0.0 2.0" />
+		<vertical xyz="0.0 0.0 1.0" />
+		<lookat xyz="0.3 0.0 0.6" />
+	</camera>
+
+	<!-- TODO: support stereo specification -->
+</world>
