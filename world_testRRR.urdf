@@ -62,7 +62,13 @@
 		<lookat xyz="0.0 0.0 0.0" />
 	</light>
 
-	<camera name="camera_front">
+	<camera name="camera_fixed">
+		<position xyz="-0.7 -0.8 0.5" />
+		<vertical xyz="0.0 0.0 1.0" />
+		<lookat xyz="0.0 0.0 0.5" />
+	</camera>
+
+	<!--<camera name="camera_front">
 		<position xyz="1.5 0.3 0.6" />
 		<vertical xyz="0.0 0.0 1.0" />
 		<lookat xyz="0.0 0.0 0.2" />
@@ -71,7 +77,7 @@
 		<position xyz="2.0 0.0 2.0" />
 		<vertical xyz="0.0 0.0 1.0" />
 		<lookat xyz="0.3 0.0 0.6" />
-	</camera>
+	</camera>-->
 
 	<!-- TODO: support stereo specification -->
 </world>
