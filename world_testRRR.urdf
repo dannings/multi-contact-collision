@@ -12,13 +12,13 @@
 	<static_object name="Obstacle1">
 		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
 		<collision>
-	        <origin xyz="0 0.4 2.0" rpy="0 0 0" />
+	        <origin xyz="0 0.4 0.0" rpy="0 0 0" />
 	        <geometry>
 	            <cylinder radius="0.1" length="0.4"/>
 	        </geometry>
 	    </collision>
 	    <visual>
-	        <origin xyz="0.0 0.4 2.0" rpy="0 0 0" />
+	        <origin xyz="0.0 0.4 0.0" rpy="0 0 0" />
 	        <geometry>
 	            <cylinder radius="0.1" length="0.4" />
 	        </geometry>

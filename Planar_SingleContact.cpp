@@ -9,6 +9,7 @@
 #include "graphics/ChaiGraphics.h"
 #include "graphics/chai_extension/CRobotBase.h"
 #include "simulation/Sai2Simulation.h"
+#include "simulation/SimulationInterface.h"
 
 #include "timer/LoopTimer.h"
 
@@ -23,6 +24,13 @@ static inline bool isnan(const Eigen::MatrixBase<Derived>& x) {
 
 using namespace std;
 
+const string world_fname = "resources/Planar_SingleContact/world_testRRR.urdf";
+const string robot_fname = "../resources/test_robot/testRRR.urdf";
+// load simulation world
+auto sim = new Simulation::Sai2Simulation(world_fname, Simulation::urdf, false);
+
+void simulation(Simulation::Sai2Simulation* sim);
+
 /**
  * DemoProject::readRedisValues()
  * ------------------------------
@@ -30,27 +38,26 @@ using namespace std;
  */
 void DemoProject::readRedisValues() {
 
+	cout << "suppposed to read redis value here!" << endl;
 	// read from Redis current sensor values
-	//redis_client_.getEigenMatrixDerivedString(JOINT_ANGLES_KEY, robot->_q);
-	//redis_client_.getEigenMatrixDerivedString(JOINT_VELOCITIES_KEY, robot->_dq);
-
+	redis_client_.getEigenMatrixDerivedString(JOINT_ANGLES_KEY, robot->_q);
+	redis_client_.getEigenMatrixDerivedString(JOINT_VELOCITIES_KEY, robot->_dq);
 	// Get current simulation timestamp from Redis
-	//redis_client_.getCommandIs(TIMESTAMP_KEY, redis_buf_);
+	redis_client_.getCommandIs(TIMESTAMP_KEY, redis_buf_);
 	//t_curr_ = stod(redis_buf_);
-
 	// Read in KP and KV from Redis (can be changed on the fly in Redis)
-	//redis_client_.getCommandIs(KP_POSITION_KEY, redis_buf_);
-	//kp_pos_ = stoi(redis_buf_);
-	//redis_client_.getCommandIs(KV_POSITION_KEY, redis_buf_);
-	//kv_pos_ = stoi(redis_buf_);
-	//redis_client_.getCommandIs(KP_ORIENTATION_KEY, redis_buf_);
-	//kp_ori_ = stoi(redis_buf_);
-	//redis_client_.getCommandIs(KV_ORIENTATION_KEY, redis_buf_);
-	//kv_ori_ = stoi(redis_buf_);
-	//redis_client_.getCommandIs(KP_JOINT_KEY, redis_buf_);
-	//kp_joint_ = stoi(redis_buf_);
-	//redis_client_.getCommandIs(KV_JOINT_KEY, redis_buf_);
-	//kv_joint_ = stoi(redis_buf_);
+	redis_client_.getCommandIs(KP_POSITION_KEY, redis_buf_);
+	kp_pos_ = stoi(redis_buf_);
+	redis_client_.getCommandIs(KV_POSITION_KEY, redis_buf_);
+	kv_pos_ = stoi(redis_buf_);
+	redis_client_.getCommandIs(KP_ORIENTATION_KEY, redis_buf_);
+	kp_ori_ = stoi(redis_buf_);
+	redis_client_.getCommandIs(KV_ORIENTATION_KEY, redis_buf_);
+	kv_ori_ = stoi(redis_buf_);
+	redis_client_.getCommandIs(KP_JOINT_KEY, redis_buf_);
+	kp_joint_ = stoi(redis_buf_);
+	redis_client_.getCommandIs(KV_JOINT_KEY, redis_buf_);
+	kv_joint_ = stoi(redis_buf_);
 }
 
 /**
@@ -59,12 +66,13 @@ void DemoProject::readRedisValues() {
  * Send all write keys to Redis.
  */
 void DemoProject::writeRedisValues() {
+	cout << "supposed to write to redis values for all variables" <<endl;
 	// Send end effector position and desired position
-	//redis_client_.setEigenMatrixDerivedString(EE_POSITION_KEY, x_);
-	//redis_client_.setEigenMatrixDerivedString(EE_POSITION_DESIRED_KEY, x_des_);
+	redis_client_.setEigenMatrixDerivedString(EE_POSITION_KEY, x_);
+	redis_client_.setEigenMatrixDerivedString(EE_POSITION_DESIRED_KEY, x_des_);
 
 	// Send torques
-	//redis_client_.setEigenMatrixDerivedString(JOINT_TORQUES_COMMANDED_KEY, command_torques_);
+	redis_client_.setEigenMatrixDerivedString(JOINT_TORQUES_COMMANDED_KEY, command_torques_);
 }
 
 /**
@@ -81,12 +89,14 @@ void DemoProject::updateModel() {
 	const string ee_link_name = "link2";
 	Eigen::Vector3d ee_local;
 	ee_local.setZero();
+	ee_local << 0,0,0.3;
 
 	// Update the model
 	robot->updateModel();
 
 	// Forward kinematics
 	robot->position(x_, ee_link_name, ee_local);
+	cout << x_ << endl;
 	robot->linearVelocity(dx_, ee_link_name, ee_local);
 
 	// Jacobians
@@ -105,8 +115,6 @@ void DemoProject::updateModel() {
  */
 DemoProject::ControllerStatus DemoProject::computeJointSpaceControlTorques() {
 	// read joint position, velocity
-    sim->getJointPositions(robot_name, robot->_q);
-    sim->getJointVelocities(robot_name, robot->_dq);
   	robot->updateModel();
 
   	int kv_joint_ = 0;
@@ -167,21 +175,22 @@ void DemoProject::initialize() {
 	timer_.setCtrlCHandler(stop);    // exit while loop on ctrl-c
 	timer_.initializeTimer(kInitializationPause); // 1 ms pause before starting loop
 
+	//initialize collision
+	sim->setCollisionRestitution(0);
+
 	//intialize conditions
 	Eigen::VectorXd q_des;
 	q_des.setZero(robot->dof());
 	q_des << 0/180.0*M_PI, 0/180.0*M_PI, 0/180.0*M_PI;
 	robot->_q = q_des;
-	sim->setJointPositions(robot_name, robot->_q);
-	sim->setCollisionRestitution(0); // put it in initialization
 	robot->updateModel();
 
 	// Start redis client
 	// Make sure redis-server is running at localhost with default port 6379
-	//redis_client_.serverIs(kRedisServerInfo);
+	redis_client_.serverIs(kRedisServerInfo);
 
 	// Set gains in Redis if not initialized
-	/*if (!redis_client_.getCommandIs(KP_POSITION_KEY)) {
+	if (!redis_client_.getCommandIs(KP_POSITION_KEY)) {
 		redis_buf_ = to_string(kp_pos_);
 		redis_client_.setCommandIs(KP_POSITION_KEY, redis_buf_);
 	}
@@ -204,7 +213,7 @@ void DemoProject::initialize() {
 	if (!redis_client_.getCommandIs(KV_JOINT_KEY)) {
 		redis_buf_ = to_string(kv_joint_);
 		redis_client_.setCommandIs(KV_JOINT_KEY, redis_buf_);
-	}*/
+	}
 }
 
 /**
@@ -219,18 +228,16 @@ void DemoProject::runLoop() {
 		++controller_counter_;
 
 		// Get latest sensor values from Redis and update robot model
-		//readRedisValues();
+		readRedisValues();
 		updateModel();
 
 		switch (controller_state_) {
 			// Wait until valid sensor values have been published to Redis
 			case REDIS_SYNCHRONIZATION:
-				
+				if (isnan(robot->_q)) continue;
+				cout << "Redis synchronized. Switching to joint space controller." << endl;
+				controller_state_ = JOINT_SPACE_INITIALIZATION;
 				break;
-				//if (isnan(robot->_q)) continue;
-				//cout << "Redis synchronized. Switching to joint space controller." << endl;
-				//controller_state_ = JOINT_SPACE_INITIALIZATION;
-				//break;
 
 			// Initialize robot to default joint configuration
 			case JOINT_SPACE_INITIALIZATION:
@@ -260,19 +267,42 @@ void DemoProject::runLoop() {
 		}
 
 		// Send command torques
-		//writeRedisValues();
+		writeRedisValues();
+
+		const string world_fname = "resources/Planar_SingleContact/world_testRRR.urdf";
+		const string robot_fname = "../resources/test_robot/testRRR.urdf";
+		const string robot_name = "testRRR";
+		//const string camera_name = "camera_front";
+		//const string camera_name = "camera_top";
+		const string ee_link_name = "link2";
+
+		//get contact info from sim
+		std::vector<Eigen::Vector3d> num_contact;
+		std::vector<Eigen::Vector3d> contact_force;
+		//assume contact is at the end effector link
+		sim->getContactList(num_contact,contact_force,robot_name,ee_link_name);
+		//output contact point and contact force
+		
+		std::vector<Eigen::Vector3d>::iterator i;
+		for(i = num_contact.begin(); i != num_contact.end(); ++i) {
+			if (i == num_contact.begin()) cout << "contact point" << endl;
+			Eigen::Vector3d current_contact_point = *i; // i instead of *i ??
+			std::cout << current_contact_point << std::endl;
+		}
+		std::vector<Eigen::Vector3d>::iterator j;
+		for(j = contact_force.begin(); j != contact_force.end(); ++j) {
+			if (j == contact_force.begin()) cout << "contact force" << endl;
+			Eigen::Vector3d current_contact_force = *j; // i instead of *i ??
+			std::cout << current_contact_force << std::endl;
+		}
 	}
 
 	// Zero out torques before quitting
 	command_torques_.setZero();
-	//redis_client_.setEigenMatrixDerivedString(JOINT_TORQUES_COMMANDED_KEY, command_torques_);
+	redis_client_.setEigenMatrixDerivedString(JOINT_TORQUES_COMMANDED_KEY, command_torques_);
 }
 
 int main(int argc, char** argv) {
-	
-	// load graphics scene
-	cout << "Loading graphics scene: " << world_fname << endl;
-	auto graphics = new Graphics::ChaiGraphics(world_fname, Graphics::urdf, false);
 
 	// Load robot
 	const string robot_name = "testRRR";
@@ -284,11 +314,12 @@ int main(int argc, char** argv) {
 	robot->updateModel();
 
 	// load simulation world
-	auto sim = new Simulation::Sai2Simulation(world_fname, Simulation::urdf, false);
+	//auto sim = new Simulation::Sai2Simulation(world_fname, Simulation::urdf, false);
 
 	// Start controller app
 	cout << "Initializing app with " << robot_name << endl;
 	DemoProject app(move(robot), robot_name);
+	cout << "App initializing..." << endl;
 	app.initialize();
 	cout << "App initialized. Waiting for Redis synchronization." << endl;
 	app.runLoop();

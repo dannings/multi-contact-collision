@@ -46,7 +46,8 @@ public:
 		command_torques_.setZero();
 
 		// Home configuration for Kuka iiwa
-		q_des_ << 90, -30, 0, 60, 0, -90, -60;
+		q_des_ << 0,0,0;//modified for useage for research!!! 7/11
+		//q_des_ << 90, -30, 0, 60, 0, -90, -60;
 		q_des_ *= M_PI / 180.0;
 		dq_des_.setZero();
 
